@@ -2,17 +2,21 @@
 
 int OnUsage(const wchar_t* trigger = NULL);
 
-enum CIT_COMMAND {
-	CIT_UNKNOWN = -1,
-	CIT_NONE = 0,
-	CIT_HELP,
-	CIT_RESIZE,
-	CIT_EXTRACT,
-	CIT_FILTER,
-	CIT_OVERLAY
+enum class CIT_COMMAND {
+	unknown = -1,
+	none = 0,
+	help,
+	resize,
+	extract,
+	filter,
+	overlay,
+	rotate,
+	fliphorz,
+	flipvert
 };
-enum CIT_ARGCOUNT {
+enum CIT_EXPECTEDARGS {
 	CAC_UNKNOWN = -1,
+	CAC_NONE				= 0x0000000,
 	CAC_XY					= 0x0000001,
 	CAC_DXDY				= 0x0000002,
 	CAC_COLOR1				= 0x0000004,
@@ -24,11 +28,11 @@ enum CIT_ARGCOUNT {
 struct CmdExpectedParameterCount
 {
 	CIT_COMMAND m_cmd;
-	CIT_ARGCOUNT m_argCount;
-	CmdExpectedParameterCount(CIT_COMMAND cmd, CIT_ARGCOUNT argCount)
+	CIT_EXPECTEDARGS m_expectedArgs;
+	CmdExpectedParameterCount(CIT_COMMAND cmd, CIT_EXPECTEDARGS expArgs)
 	{
 		m_cmd = cmd;
-		m_argCount = argCount;
+		m_expectedArgs = expArgs;
 	}
 };
 
@@ -36,7 +40,7 @@ struct CmdToolCommand
 {
 private:
 	bool ParseOption(const wchar_t* argOption);
-	void GetExpectedArgCount();
+	void GetExpectedArguments();
 
 public:
 	CIT_COMMAND m_cit;
@@ -45,19 +49,19 @@ public:
 	bool m_color1, m_color2, m_transparent;
 	wchar_t m_wszSrcFilename[MAX_PATH];
 	wchar_t m_wszDstFilename[MAX_PATH];
-	CIT_ARGCOUNT m_expectedArgs;
+	CIT_EXPECTEDARGS m_expectedArgs;
 	int x, y, dxSrc, dySrc, dxDst, dyDst;
 	bool m_quiet, m_verbose;
 
 	CmdToolCommand()
 	{
-		m_cit = CIT_UNKNOWN;
+		m_cit = CIT_COMMAND::unknown;
 		m_color = RGB(0xFF, 0xFF, 0xFF);
 		m_color1 = m_color2 = m_transparent = false;
 		m_quiet = false;
 		memset(m_wszSrcFilename, 0, _countof(m_wszSrcFilename));
 		memset(m_wszDstFilename, 0, _countof(m_wszDstFilename));
-		m_expectedArgs = CAC_ALL;
+		m_expectedArgs = CIT_EXPECTEDARGS::CAC_ALL;
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;
 		m_verbose = false;
 	}

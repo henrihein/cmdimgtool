@@ -164,7 +164,7 @@ bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colo
 	return Gdiplus::Ok == bmDst.Save(pathname, &pngClsid, NULL);
 }
 
-bool SaveImage(const wchar_t pathname[], Gdiplus::Bitmap& img)
+bool SaveImage(const wchar_t pathname[], Gdiplus::Image& img)
 {
 	CLSID pngClsid;
 

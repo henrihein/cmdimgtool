@@ -193,7 +193,6 @@ int FilterImage(CmdToolCommand& cmd)
 	xRetOp = FilterImageFrom(cmd, imgSrc);
 	delete imgSrc;
 	return xRetOp;
-
 }
 int OverlayImage(CmdToolCommand& cmd)
 {
@@ -208,7 +207,31 @@ int OverlayImage(CmdToolCommand& cmd)
 	delete imgSrc;
 	return oRetOp;
 }
+int RotateFlipImage(CmdToolCommand& cmd)
+{
+	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
+	int xRetOp = 0;
 
+	LogImage(L"rotateflipimg", *imgSrc);
+	switch (cmd.m_cit)
+	{
+	case CIT_COMMAND::rotate:
+		cmd.Show(L"Rotating image");
+		imgSrc->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
+		break;
+	case CIT_COMMAND::flipvert:
+		cmd.Show(L"Flipping image vertically");
+		break;
+	case CIT_COMMAND::fliphorz:
+		cmd.Show(L"Flipping image horizontally");
+		break;
+	default:
+		break;
+	}
+	xRetOp = SaveImage(cmd.m_wszDstFilename, *imgSrc);
+	delete imgSrc;
+	return xRetOp;
+}
 int DoImageCommand(CmdToolCommand& cmd)
 {
 	CGDIInit gdi;
@@ -222,15 +245,19 @@ int DoImageCommand(CmdToolCommand& cmd)
 		return 3;
 	switch (cmd.m_cit)
 	{
-	case CIT_EXTRACT:
+	case CIT_COMMAND::extract:
 		return ExtractImage(cmd);
-	case CIT_RESIZE:
+	case CIT_COMMAND::resize:
 		return ResizeImage(cmd);
-	case CIT_FILTER:
+	case CIT_COMMAND::filter:
 		return FilterImage(cmd);
-	case CIT_OVERLAY:
+	case CIT_COMMAND::overlay:
 		return OverlayImage(cmd);
-	case CIT_HELP:
+	case CIT_COMMAND::rotate:
+	case CIT_COMMAND::flipvert:
+	case CIT_COMMAND::fliphorz:
+		return RotateFlipImage(cmd);
+	case CIT_COMMAND::help:
 		return 0;
 	}
 	wprintf(L"Unknown command: %u\n", cmd.m_cit);
@@ -243,9 +270,9 @@ int wmain(int argc, wchar_t* argv[])
 
 	if (0 != parseRes)
 		return parseRes;
-	if (CIT_NONE == cmd.m_cit)
+	if (CIT_COMMAND::none == cmd.m_cit)
 		return 0;
-	if (CIT_UNKNOWN == cmd.m_cit)
+	if (CIT_COMMAND::unknown == cmd.m_cit)
 	{
 		_putws(L"Could not parse command line.");
 		return 1;

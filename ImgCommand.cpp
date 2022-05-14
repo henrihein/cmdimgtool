@@ -2,10 +2,13 @@
 #include "GdiHelpers.h"
 
 CmdExpectedParameterCount g_parameterCounts[] = {
-	CmdExpectedParameterCount(CIT_EXTRACT, CAC_XYDXDY),
-	CmdExpectedParameterCount(CIT_RESIZE, CAC_DXDY),
-	CmdExpectedParameterCount(CIT_FILTER, CAC_COLORCOLORDXDY),
-	CmdExpectedParameterCount(CIT_OVERLAY, CAC_XYDXDY)
+	CmdExpectedParameterCount(CIT_COMMAND::extract, CIT_EXPECTEDARGS::CAC_XYDXDY),
+	CmdExpectedParameterCount(CIT_COMMAND::resize, CIT_EXPECTEDARGS::CAC_DXDY),
+	CmdExpectedParameterCount(CIT_COMMAND::filter, CIT_EXPECTEDARGS::CAC_COLORCOLORDXDY),
+	CmdExpectedParameterCount(CIT_COMMAND::overlay, CIT_EXPECTEDARGS::CAC_XYDXDY),
+	CmdExpectedParameterCount(CIT_COMMAND::rotate, CIT_EXPECTEDARGS::CAC_NONE),
+	CmdExpectedParameterCount(CIT_COMMAND::fliphorz, CIT_EXPECTEDARGS::CAC_NONE),
+	CmdExpectedParameterCount(CIT_COMMAND::flipvert, CIT_EXPECTEDARGS::CAC_NONE)
 };
 
 int OnUsage(const wchar_t* trigger)
@@ -24,6 +27,9 @@ int OnUsage(const wchar_t* trigger)
 	printf("   extract\r\n");
 	printf("   resize\r\n");
 	printf("   filter\r\n");
+	printf("   rotate\r\n");
+	printf("   flipvertical\r\n");
+	printf("   fliphorizontal\r\n");
 	printf("   overlay\r\n");
 	return ret;
 }
@@ -59,12 +65,17 @@ void CmdToolCommand::EmitColor2()
 
 CIT_COMMAND CommandFromArg(const wchar_t* arg)
 {
-	if (0 == _wcsicmp(arg, L"help")) return CIT_EXTRACT;
-	if (0 == _wcsicmp(arg, L"extract")) return CIT_EXTRACT;
-	if (0 == _wcsicmp(arg, L"resize")) return CIT_RESIZE;
-	if (0 == _wcsicmp(arg, L"filter")) return CIT_FILTER;
-	if (0 == _wcsicmp(arg, L"overlay")) return CIT_OVERLAY;
-	return CIT_UNKNOWN;
+	if (0 == _wcsicmp(arg, L"help")) return CIT_COMMAND::extract;
+	if (0 == _wcsicmp(arg, L"extract")) return CIT_COMMAND::extract;
+	if (0 == _wcsicmp(arg, L"resize")) return CIT_COMMAND::resize;
+	if (0 == _wcsicmp(arg, L"filter")) return CIT_COMMAND::filter;
+	if (0 == _wcsicmp(arg, L"overlay")) return CIT_COMMAND::overlay;
+	if (0 == _wcsicmp(arg, L"rotate")) return CIT_COMMAND::rotate;
+	if (0 == _wcsicmp(arg, L"fliphorz")) return CIT_COMMAND::fliphorz;
+	if (0 == _wcsicmp(arg, L"fliphorizontal")) return CIT_COMMAND::fliphorz;
+	if (0 == _wcsicmp(arg, L"flipvert")) return CIT_COMMAND::flipvert;
+	if (0 == _wcsicmp(arg, L"flipvertical")) return CIT_COMMAND::flipvert;
+	return CIT_COMMAND::unknown;
 }
 #define GetBValueFromArg(arg)      (LOBYTE(arg))
 #define GetGValueFromArg(arg)      (LOBYTE(((WORD)(arg)) >> 8))
@@ -122,12 +133,12 @@ bool CmdToolCommand::Initialize()
 	if (-1 == dyDst) dyDst = dySrc;
 	return true;
 }
-void CmdToolCommand::GetExpectedArgCount()
+void CmdToolCommand::GetExpectedArguments()
 {
 	for (int ixCmdArgCount = 0; ixCmdArgCount < _countof(g_parameterCounts); ixCmdArgCount++)
 		if (g_parameterCounts[ixCmdArgCount].m_cmd == m_cit)
 		{
-			m_expectedArgs = g_parameterCounts[ixCmdArgCount].m_argCount;
+			m_expectedArgs = g_parameterCounts[ixCmdArgCount].m_expectedArgs;
 			return;
 		}
 }
@@ -165,25 +176,25 @@ bool CmdToolCommand::ParseOption(const wchar_t* argOption)
 }
 bool CmdToolCommand::CheckExpectedArgs()
 {
-	if (CAC_XY & m_expectedArgs)
+	if (CIT_EXPECTEDARGS::CAC_XY & m_expectedArgs)
 		if ((0 > x) || (0 > y))
 		{
 			_putws(L"Expected: X and Y coordinates.");
 			return false;
 		}
-	if (CAC_DXDY & m_expectedArgs)
+	if (CIT_EXPECTEDARGS::CAC_DXDY & m_expectedArgs)
 		if ((0 >= dxSrc) || (0 >= dySrc))
 		{
 			_putws(L"Expected: DX and DY dimensions.");
 			return false;
 		}
-	if (CAC_COLOR1 & m_expectedArgs)
+	if (CIT_EXPECTEDARGS::CAC_COLOR1 & m_expectedArgs)
 		if (!m_color1)
 		{
 			_putws(L"Expected: color specification for source.");
 			return false;
 		}
-	if (CAC_COLOR2 & m_expectedArgs)
+	if (CIT_EXPECTEDARGS::CAC_COLOR2 & m_expectedArgs)
 		if (!m_color2)
 		{
 			_putws(L"Expected: color specification for target.");
@@ -197,20 +208,20 @@ int CmdToolCommand::ParseCommandLine(int argc, wchar_t* argv[])
 
 	if (2 >= argc)
 	{
-		m_cit = CIT_NONE;
+		m_cit = CIT_COMMAND::none;
 		OnUsage();
 		return 0;
 	}
 	if (3 > argc)
 		return OnUsage(L"Too few arguments");
-	if (CIT_UNKNOWN == (m_cit = CommandFromArg(argv[1])))
+	if (CIT_COMMAND::unknown == (m_cit = CommandFromArg(argv[1])))
 		return OnUsage(argv[1]);
-	if (CIT_HELP == m_cit)
+	if (CIT_COMMAND::help == m_cit)
 	{
 		OnUsage();
 		return 0;
 	}
-	GetExpectedArgCount();
+	GetExpectedArguments();
 	while ('/' == argv[ixCmd][0])
 	{
 		if (!ParseOption(argv[ixCmd]))
@@ -224,7 +235,11 @@ int CmdToolCommand::ParseCommandLine(int argc, wchar_t* argv[])
 		return OnUsage(L"No target file specified.");
 	StringCbCopyW(m_wszDstFilename, MAX_PATH, argv[ixCmd + 1]);
 	if (argc <= (3 + ixCmd))
+	{
+		if (CAC_NONE == m_expectedArgs)
+			return 0;
 		return OnUsage(L"No coordinates.");
+	}
 	x = NumFromArg(argv[ixCmd + 2]);
 	y = NumFromArg(argv[ixCmd + 3]);
 	if (argc >= (6 + ixCmd))
