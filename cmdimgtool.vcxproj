@@ -83,6 +83,7 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ExpectedArgs.h" />
     <ClInclude Include="GdiHelpers.h" />
     <ClInclude Include="ImgCommand.h" />
     <ClInclude Include="resource.h" />

@@ -232,13 +232,30 @@ int RotateFlipImage(CmdToolCommand& cmd)
 	delete imgSrc;
 	return xRetOp;
 }
+bool FileExists(LPCWSTR filename)
+{
+	if (nullptr != filename)
+	{
+		HANDLE hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+
+		if (INVALID_HANDLE_VALUE != hFile)
+		{
+			CloseHandle(hFile);
+			return true;
+		}
+	}
+	return false;
+}
 int DoImageCommand(CmdToolCommand& cmd)
 {
 	CGDIInit gdi;
 
 	if (!cmd.Initialize())
 	{
-		wprintf(L"Could not initialize with %s\n", cmd.m_wszSrcFilename);
+		if (FileExists(cmd.m_wszSrcFilename))
+			wprintf(L"Could not initialize with file %s\n", cmd.m_wszSrcFilename);
+		else
+			wprintf(L"%s not found\n", cmd.m_wszSrcFilename);
 		return 2;
 	}
 	if (!cmd.CheckExpectedArgs())

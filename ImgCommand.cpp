@@ -1,15 +1,16 @@
 #include "ImgCommand.h"
 #include "GdiHelpers.h"
 
-CmdExpectedParameterCount g_parameterCounts[] = {
-	CmdExpectedParameterCount(CIT_COMMAND::extract, CIT_EXPECTEDARGS::CAC_XYDXDY),
-	CmdExpectedParameterCount(CIT_COMMAND::resize, CIT_EXPECTEDARGS::CAC_DXDY),
-	CmdExpectedParameterCount(CIT_COMMAND::filter, CIT_EXPECTEDARGS::CAC_COLORCOLORDXDY),
-	CmdExpectedParameterCount(CIT_COMMAND::overlay, CIT_EXPECTEDARGS::CAC_XYDXDY),
-	CmdExpectedParameterCount(CIT_COMMAND::rotate, CIT_EXPECTEDARGS::CAC_NONE),
-	CmdExpectedParameterCount(CIT_COMMAND::fliphorz, CIT_EXPECTEDARGS::CAC_NONE),
-	CmdExpectedParameterCount(CIT_COMMAND::flipvert, CIT_EXPECTEDARGS::CAC_NONE)
+CmdExpectedParameters g_parameterCounts[] = {
+	CmdExpectedParameters(CIT_COMMAND::extract, XYDxDyExpected()),
+	CmdExpectedParameters(CIT_COMMAND::resize, DxDyExpected()),
+	CmdExpectedParameters(CIT_COMMAND::filter, ColorColorDxDyExpected()),
+	CmdExpectedParameters(CIT_COMMAND::overlay, XYDxDyExpected()),
+	CmdExpectedParameters(CIT_COMMAND::rotate, ExpectedArgsValue()),
+	CmdExpectedParameters(CIT_COMMAND::fliphorz, ExpectedArgsValue()),
+	CmdExpectedParameters(CIT_COMMAND::flipvert, ExpectedArgsValue())
 };
+ExpectedArgsValue CmdToolCommand::m_defExpectedArgs;
 
 int OnUsage(const wchar_t* trigger)
 {
@@ -133,14 +134,14 @@ bool CmdToolCommand::Initialize()
 	if (-1 == dyDst) dyDst = dySrc;
 	return true;
 }
-void CmdToolCommand::GetExpectedArguments()
+const ExpectedArgsValue& CmdToolCommand::GetExpectedArguments()
 {
 	for (int ixCmdArgCount = 0; ixCmdArgCount < _countof(g_parameterCounts); ixCmdArgCount++)
 		if (g_parameterCounts[ixCmdArgCount].m_cmd == m_cit)
 		{
-			m_expectedArgs = g_parameterCounts[ixCmdArgCount].m_expectedArgs;
-			return;
+			return g_parameterCounts[ixCmdArgCount].m_expectedArgs;
 		}
+	return m_defExpectedArgs;
 }
 bool CmdToolCommand::ParseOption(const wchar_t* argOption)
 {
@@ -176,25 +177,27 @@ bool CmdToolCommand::ParseOption(const wchar_t* argOption)
 }
 bool CmdToolCommand::CheckExpectedArgs()
 {
-	if (CIT_EXPECTEDARGS::CAC_XY & m_expectedArgs)
+	const ExpectedArgsValue& expectedArgs = GetExpectedArguments();
+
+	if (expectedArgs.XYExpected())
 		if ((0 > x) || (0 > y))
 		{
 			_putws(L"Expected: X and Y coordinates.");
 			return false;
 		}
-	if (CIT_EXPECTEDARGS::CAC_DXDY & m_expectedArgs)
+	if (expectedArgs.DxDyExpected())
 		if ((0 >= dxSrc) || (0 >= dySrc))
 		{
 			_putws(L"Expected: DX and DY dimensions.");
 			return false;
 		}
-	if (CIT_EXPECTEDARGS::CAC_COLOR1 & m_expectedArgs)
+	if (expectedArgs.Color1Expected())
 		if (!m_color1)
 		{
 			_putws(L"Expected: color specification for source.");
 			return false;
 		}
-	if (CIT_EXPECTEDARGS::CAC_COLOR2 & m_expectedArgs)
+	if (expectedArgs.Color2Expected())
 		if (!m_color2)
 		{
 			_putws(L"Expected: color specification for target.");
@@ -221,7 +224,12 @@ int CmdToolCommand::ParseCommandLine(int argc, wchar_t* argv[])
 		OnUsage();
 		return 0;
 	}
-	GetExpectedArguments();
+	return ParseCommandLineArguments(argc, argv, ixCmd);
+}
+int CmdToolCommand::ParseCommandLineArguments(int argc, wchar_t* argv[], int ixCmd)
+{
+	const ExpectedArgsValue &expectedArgs = GetExpectedArguments();
+
 	while ('/' == argv[ixCmd][0])
 	{
 		if (!ParseOption(argv[ixCmd]))
@@ -236,7 +244,7 @@ int CmdToolCommand::ParseCommandLine(int argc, wchar_t* argv[])
 	StringCbCopyW(m_wszDstFilename, MAX_PATH, argv[ixCmd + 1]);
 	if (argc <= (3 + ixCmd))
 	{
-		if (CAC_NONE == m_expectedArgs)
+		if (expectedArgs.IsNone())
 			return 0;
 		return OnUsage(L"No coordinates.");
 	}

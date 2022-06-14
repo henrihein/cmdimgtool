@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ExpectedArgs.h"
 
 int OnUsage(const wchar_t* trigger = NULL);
 
@@ -14,33 +15,24 @@ enum class CIT_COMMAND {
 	fliphorz,
 	flipvert
 };
-enum CIT_EXPECTEDARGS {
-	CAC_UNKNOWN = -1,
-	CAC_NONE				= 0x0000000,
-	CAC_XY					= 0x0000001,
-	CAC_DXDY				= 0x0000002,
-	CAC_COLOR1				= 0x0000004,
-	CAC_COLOR2				= 0x0000008,
-	CAC_XYDXDY				= CAC_XY | CAC_DXDY,
-	CAC_COLORCOLORDXDY		= CAC_DXDY | CAC_COLOR1 | CAC_COLOR2,
-	CAC_ALL
-};
-struct CmdExpectedParameterCount
+
+struct CmdExpectedParameters
 {
-	CIT_COMMAND m_cmd;
-	CIT_EXPECTEDARGS m_expectedArgs;
-	CmdExpectedParameterCount(CIT_COMMAND cmd, CIT_EXPECTEDARGS expArgs)
+	const CIT_COMMAND m_cmd;
+	const ExpectedArgsValue m_expectedArgs;
+
+	CmdExpectedParameters(CIT_COMMAND cmd, const ExpectedArgsValue &expArgs) : m_expectedArgs(expArgs), m_cmd(cmd)
 	{
-		m_cmd = cmd;
-		m_expectedArgs = expArgs;
 	}
 };
 
 struct CmdToolCommand
 {
-private:
+protected:
+	static ExpectedArgsValue m_defExpectedArgs;
 	bool ParseOption(const wchar_t* argOption);
-	void GetExpectedArguments();
+	const ExpectedArgsValue &GetExpectedArguments();
+	int ParseCommandLineArguments(int argc, wchar_t* argv[], int ixCmd);
 
 public:
 	CIT_COMMAND m_cit;
@@ -49,7 +41,6 @@ public:
 	bool m_color1, m_color2, m_transparent;
 	wchar_t m_wszSrcFilename[MAX_PATH];
 	wchar_t m_wszDstFilename[MAX_PATH];
-	CIT_EXPECTEDARGS m_expectedArgs;
 	int x, y, dxSrc, dySrc, dxDst, dyDst;
 	bool m_quiet, m_verbose;
 
@@ -61,7 +52,6 @@ public:
 		m_quiet = false;
 		memset(m_wszSrcFilename, 0, _countof(m_wszSrcFilename));
 		memset(m_wszDstFilename, 0, _countof(m_wszDstFilename));
-		m_expectedArgs = CIT_EXPECTEDARGS::CAC_ALL;
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;
 		m_verbose = false;
 	}
