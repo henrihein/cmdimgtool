@@ -153,22 +153,42 @@ bool DrawWithFilter(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, COLORREF col
 {
 	return DrawWithFilter(hbmSrc, hdcDst, colormask, colorDst, 0, 0, 0, 0, dx, dy);
 }
+
+const wchar_t* GetImageType(const wchar_t pathname[])
+{
+	const wchar_t* ztExt = wcsrchr(pathname, '.');
+
+	if (nullptr != ztExt)
+	{
+		if (0 == wcscmp(ztExt, L".png"))
+			return L"image/png";
+		if (0 == wcscmp(ztExt, L".gif"))
+			return L"image/gif";
+		if (0 == wcscmp(ztExt, L".jpg"))
+			return L"image/jpeg";
+		if (0 == wcscmp(ztExt, L".jpeg"))
+			return L"image/jpeg";
+		if (0 == wcscmp(ztExt, L".bmp"))
+			return L"image/bmp";
+	}
+	//Default to png
+	return L"image/png";
+}
 bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	Gdiplus::Bitmap bmDst(dx, dy, PixelFormat32bppPARGB);
 	CLSID pngClsid;
 
 	MaskToTransparent(hbmSrc, bmDst, colormask, dx, dy);
-	if (UINT_MAX == GetEncoderClsid(L"image/png", pngClsid))
+	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), pngClsid))
 		return false;
 	return Gdiplus::Ok == bmDst.Save(pathname, &pngClsid, NULL);
 }
-
 bool SaveImage(const wchar_t pathname[], Gdiplus::Image& img)
 {
 	CLSID pngClsid;
 
-	if (UINT_MAX == GetEncoderClsid(L"image/png", pngClsid))
+	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), pngClsid))
 		return false;
 	return Gdiplus::Ok == img.Save(pathname, &pngClsid, NULL);
 }
