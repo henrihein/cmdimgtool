@@ -90,6 +90,28 @@ bool BltPiece(HDC hdcDst, LONG xDst, LONG yDst, LONG dxDst, LONG dyDst, HDC hdcS
 }
 
 
+int ShowImageInfo(CmdToolCommand& cmd)
+{
+	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
+
+	ShowImageProperties(*imgSrc, L"Image Information");
+	return 0;
+}
+int ConvertImage(CmdToolCommand& cmd)
+{
+	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
+
+	ShowImageProperties(*imgSrc, L"Image to convert");
+	return SaveImage(cmd.m_wszDstFilename, *imgSrc);
+}
+int CreateCanvas(CmdToolCommand& cmd)
+{
+	Gdiplus::Bitmap bm(cmd.x, cmd.y, (Gdiplus::PixelFormat)PixelFormat32bppARGB);
+
+	if (Fill(bm, cmd.m_color))
+		return SaveImageTo(cmd.m_wszDstFilename, bm);
+	return 181;
+}
 int ExtractImageFrom(CmdToolCommand& cmd, Gdiplus::Image* imgSrc)
 {
 	int retOp = 2;
@@ -262,6 +284,12 @@ int DoImageCommand(CmdToolCommand& cmd)
 		return 3;
 	switch (cmd.m_cit)
 	{
+	case CIT_COMMAND::info:
+		return ShowImageInfo(cmd);
+	case CIT_COMMAND::convert:
+		return ConvertImage(cmd);
+	case CIT_COMMAND::canvas:
+		return CreateCanvas(cmd);
 	case CIT_COMMAND::extract:
 		return ExtractImage(cmd);
 	case CIT_COMMAND::resize:

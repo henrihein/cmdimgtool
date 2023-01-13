@@ -7,6 +7,9 @@ enum class CIT_COMMAND {
 	unknown = -1,
 	none = 0,
 	help,
+	info,
+	convert,
+	canvas,
 	resize,
 	extract,
 	filter,
@@ -30,9 +33,10 @@ struct CmdToolCommand
 {
 protected:
 	static ExpectedArgsValue m_defExpectedArgs;
+	const ExpectedArgsValue* m_actualExpectedArgs;
 	bool ParseOption(const wchar_t* argOption);
-	const ExpectedArgsValue &GetExpectedArguments();
-	int ParseCommandLineArguments(int argc, wchar_t* argv[], int ixCmd);
+	const ExpectedArgsValue *GetExpectedArguments();
+	int ParseCommandLineArguments(int argc, wchar_t* argv[]);
 
 public:
 	CIT_COMMAND m_cit;
@@ -42,14 +46,16 @@ public:
 	wchar_t m_wszSrcFilename[MAX_PATH];
 	wchar_t m_wszDstFilename[MAX_PATH];
 	int x, y, dxSrc, dySrc, dxDst, dyDst;
-	bool m_quiet, m_verbose;
+	bool m_quiet, m_verbose, m_wrongArgs;
 
 	CmdToolCommand()
 	{
 		m_cit = CIT_COMMAND::unknown;
+		m_actualExpectedArgs = nullptr;
 		m_color = RGB(0xFF, 0xFF, 0xFF);
 		m_color1 = m_color2 = m_transparent = false;
 		m_quiet = false;
+		m_wrongArgs = true;
 		memset(m_wszSrcFilename, 0, _countof(m_wszSrcFilename));
 		memset(m_wszDstFilename, 0, _countof(m_wszDstFilename));
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;

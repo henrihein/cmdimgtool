@@ -32,7 +32,10 @@ bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc);
 bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy);
 bool DrawImageToCanvas(Gdiplus::Image& imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
 bool DrawImageToCanvas(Gdiplus::Image& imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
+bool Fill(Gdiplus::Image& img, COLORREF color);
 UINT GetEncoderClsid(const WCHAR* format, CLSID& clsid);
+
+void ShowImageProperties(Gdiplus::Image& img, const wchar_t *tag);
 
 class CGDIInit
 {

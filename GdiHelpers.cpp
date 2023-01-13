@@ -1,6 +1,74 @@
 #include "stdafx.h"
 #include "GdiHelpers.h"
 
+const char* FormatPixel(const Gdiplus::Color& pixel, char *fmtOutput, size_t cbOutput)
+{
+	snprintf(fmtOutput, cbOutput, "A:%02X R:%02X G:%02X B:%02X", pixel.GetA(), pixel.GetR(), pixel.GetG(), pixel.GetB());
+	return fmtOutput;
+}
+void ShowImageProperties(Gdiplus::Image& img, const wchar_t *tag)
+{
+	UINT uFlags = img.GetFlags();
+	Gdiplus::ImageType imgType = img.GetType();
+	Gdiplus::PixelFormat pf = img.GetPixelFormat();
+	bool isbm = false;
+	UINT dx = img.GetWidth(), dy = img.GetHeight();
+
+	wprintf(L"Image properties: %s\n--------------------------------------\n", tag);
+	printf(" %3u x %3u\n", dx, dy);
+	if (Gdiplus::ImageFlags::ImageFlagsHasAlpha & uFlags)
+		printf("Image supports Alpha channel\n");
+	switch (imgType)
+	{
+	case Gdiplus::ImageType::ImageTypeBitmap:
+		printf("Image is a bitmap.\n");
+		isbm = true;
+		break;
+	case Gdiplus::ImageType::ImageTypeMetafile:
+		printf("Image is a metafile.\n");
+		break;
+	default:
+		printf("Image is an unknown type.\n");
+		break;
+	}
+	switch (pf)
+	{
+	case PixelFormat1bppIndexed: puts("1bpp, Indexed"); break;
+	case PixelFormat4bppIndexed: puts("4bpp, Indexed"); break;
+	case PixelFormat8bppIndexed: puts("8bpp, Indexed"); break;
+	case PixelFormat16bppARGB1555: puts("16bpp, ARGB1555"); break;
+	case PixelFormat16bppGrayScale: puts("16bpp, GrayScale"); break;
+	case PixelFormat16bppRGB555: puts("16bpp, RGB555"); break;
+	case PixelFormat16bppRGB565: puts("16bpp, RGB565"); break;
+	case PixelFormat24bppRGB: puts("24bpp, RGB"); break;
+	case PixelFormat32bppARGB: puts("32bpp, ARGB"); break;
+	case PixelFormat32bppPARGB: puts("32bpp, PARGB"); break;
+	case PixelFormat32bppRGB: puts("32bpp, RGB"); break;
+	case PixelFormat48bppRGB: puts("48bpp, RGB"); break;
+	case PixelFormat64bppARGB: puts("64bpp, ARGB"); break;
+	case PixelFormat64bppPARGB: puts("64bpp, PARGB"); break;
+	default: printf("Unknown pixel format %u\n", pf); break;
+	}
+	if (isbm)
+	{
+		Gdiplus::Bitmap* pbm = (Gdiplus::Bitmap*)&img;
+
+		if (nullptr != pbm)
+		{
+			char fmtOutput[60];
+			Gdiplus::Color pixel;
+			const UINT x2 = dx / 2, y2 = dy / 2;
+
+			printf("Got Bitmap from image\n");
+			if (Gdiplus::Status::Ok == pbm->GetPixel(0, 0, &pixel))
+				printf("Upper left pixel is: %s\n", FormatPixel(pixel, fmtOutput, sizeof(fmtOutput)));
+			if ((0 < x2) || (0 < y2))
+				if (Gdiplus::Status::Ok == pbm->GetPixel(x2, y2, &pixel))
+					printf("Central pixel is: %s\n", FormatPixel(pixel, fmtOutput, sizeof(fmtOutput)));
+		}
+	}
+}
+
 bool SizeFromBitmap(const HBITMAP hbm, int &dx, int &dy)
 {
 	assert(hbm);
@@ -84,6 +152,15 @@ bool DrawMaskWithFilter(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, Gdipl
 	imageAttributes.SetRemapTable(1, &colorMap, Gdiplus::ColorAdjustTypeBitmap);
 	return (Gdiplus::Ok == drawer.DrawImage(&imgSrc, rect, imgRx, imgRy, imgSizeRdx, imgSizeRdy, Gdiplus::UnitPixel, &imageAttributes));
 }
+bool Fill(Gdiplus::Image& img, COLORREF color)
+{
+	Gdiplus::SolidBrush brush(Gdiplus::Color(GetAValue(color), GetRValue(color), GetGValue(color), GetBValue(color)));
+	Gdiplus::Rect rect(0, 0, img.GetWidth(), img.GetHeight());
+	Gdiplus::Graphics drawer(&img);
+
+	return Gdiplus::Status::Ok == drawer.FillRectangle(&brush, rect);
+}
+
 bool MaskToTransparent(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask, 
 	const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst)
 {
@@ -177,20 +254,20 @@ const wchar_t* GetImageType(const wchar_t pathname[])
 bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	Gdiplus::Bitmap bmDst(dx, dy, PixelFormat32bppPARGB);
-	CLSID pngClsid;
+	CLSID imgClsid;
 
 	MaskToTransparent(hbmSrc, bmDst, colormask, dx, dy);
-	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), pngClsid))
+	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), imgClsid))
 		return false;
-	return Gdiplus::Ok == bmDst.Save(pathname, &pngClsid, NULL);
+	return Gdiplus::Ok == bmDst.Save(pathname, &imgClsid, NULL);
 }
 bool SaveImage(const wchar_t pathname[], Gdiplus::Image& img)
 {
-	CLSID pngClsid;
+	CLSID imgClsid;
 
-	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), pngClsid))
+	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), imgClsid))
 		return false;
-	return Gdiplus::Ok == img.Save(pathname, &pngClsid, NULL);
+	return Gdiplus::Ok == img.Save(pathname, &imgClsid, NULL);
 }
 bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc)
 {
