@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "GdiHelpers.h"
 #include "ImgCommand.h"
+#include "ImageLoader.h"
 #include "resource.h"
 
 
@@ -243,9 +244,11 @@ int RotateFlipImage(CmdToolCommand& cmd)
 		break;
 	case CIT_COMMAND::flipvert:
 		cmd.Show(L"Flipping image vertically");
+		imgSrc->RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipY);
 		break;
 	case CIT_COMMAND::fliphorz:
 		cmd.Show(L"Flipping image horizontally");
+		imgSrc->RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipX);
 		break;
 	default:
 		break;
@@ -268,11 +271,11 @@ bool FileExists(LPCWSTR filename)
 	}
 	return false;
 }
-int DoImageCommand(CmdToolCommand& cmd)
+int Initialize(CmdToolCommand& cmd)
 {
-	CGDIInit gdi;
+	CImageLoader img(cmd.m_wszSrcFilename);
 
-	if (!cmd.Initialize())
+	if (!cmd.Initialize(img.Image()))
 	{
 		if (FileExists(cmd.m_wszSrcFilename))
 			wprintf(L"Could not initialize with file %s\n", cmd.m_wszSrcFilename);
@@ -280,6 +283,14 @@ int DoImageCommand(CmdToolCommand& cmd)
 			wprintf(L"%s not found\n", cmd.m_wszSrcFilename);
 		return 2;
 	}
+	return 0;
+}
+int DoImageCommand(CmdToolCommand& cmd)
+{
+	CGDIInit gdi;
+
+	if (int iInitRes = Initialize(cmd))
+		return iInitRes;
 	if (!cmd.CheckExpectedArgs())
 		return 3;
 	switch (cmd.m_cit)

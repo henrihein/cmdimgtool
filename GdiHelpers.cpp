@@ -87,11 +87,11 @@ bool SizeFromBitmap(const HBITMAP hbm, int &dx, int &dy)
 	//Most likely we are trying to load a bum bitmap
 	return false;
 }
-bool SizeFromImage(Gdiplus::Image& img, long& dx, long& dy)
+bool SizeFromImage(const Gdiplus::Image& img, long& dx, long& dy)
 {
 	Gdiplus::SizeF ds;
 
-	if (Gdiplus::Status::Ok == img.GetPhysicalDimension(&ds))
+	if (Gdiplus::Status::Ok == (const_cast<Gdiplus::Image&>(img).GetPhysicalDimension(&ds)))
 	{ 
 		dx = (long)ceil(ds.Width);
 		dy = (long)ceil(ds.Height);

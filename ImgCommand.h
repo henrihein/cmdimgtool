@@ -61,7 +61,7 @@ public:
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;
 		m_verbose = false;
 	}
-	bool Initialize();
+	bool Initialize(const Gdiplus::Image *srcImage);
 	bool CheckExpectedArgs();
 	COLORREF ColorFromArg(const wchar_t* arg);
 	int ParseCommandLine(int argc, wchar_t* argv[]);

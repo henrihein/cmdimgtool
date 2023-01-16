@@ -16,7 +16,7 @@ const COLORREF color_none = RGB(0, 0, 0);
 const COLORREF color_mask = RGB(0, 128, 128);
 
 bool SizeFromBitmap(const HBITMAP hbm, int& dx, int& dy);
-bool SizeFromImage(Gdiplus::Image &img, long& dx, long& dy);
+bool SizeFromImage(const Gdiplus::Image &img, long& dx, long& dy);
 LONG GetBitmapRes(const HBITMAP hbm);
 bool DrawMaskWithFilter(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, Gdiplus::Color colormask, Gdiplus::Color colordest,
 						const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst);

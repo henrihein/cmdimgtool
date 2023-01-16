@@ -83,6 +83,7 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="ExpectedArgs.h" />
     <ClInclude Include="GdiHelpers.h" />
     <ClInclude Include="ImgCommand.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="cmdimgtool.cpp" />
     <ClCompile Include="GdiHelpers.cpp" />
     <ClCompile Include="ImgCommand.cpp" />
