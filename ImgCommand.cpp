@@ -226,6 +226,12 @@ bool CmdToolCommand::CheckExpectedArgs()
 		}
 	return true;
 }
+bool CmdToolCommand::NeedSourceFile() const
+{
+	if (nullptr != m_actualExpectedArgs)
+		return m_actualExpectedArgs->SourceExpected();
+	return false;
+}
 int CmdToolCommand::ParseCommandLine(int argc, wchar_t* argv[])
 {
 	if (2 >= argc)

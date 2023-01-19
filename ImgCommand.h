@@ -63,6 +63,7 @@ public:
 	}
 	bool Initialize(const Gdiplus::Image *srcImage);
 	bool CheckExpectedArgs();
+	bool NeedSourceFile() const;
 	COLORREF ColorFromArg(const wchar_t* arg);
 	int ParseCommandLine(int argc, wchar_t* argv[]);
 	void EmitColor(COLORREF color);
