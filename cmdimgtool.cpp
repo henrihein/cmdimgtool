@@ -5,6 +5,7 @@
 #include "GdiHelpers.h"
 #include "ImgCommand.h"
 #include "ImageLoader.h"
+#include "errors.h"
 #include "resource.h"
 
 
@@ -281,7 +282,7 @@ int Initialize(CmdToolCommand& cmd)
 			wprintf(L"Could not initialize with file %s\n", cmd.m_wszSrcFilename);
 		else
 			wprintf(L"%s not found\n", cmd.m_wszSrcFilename);
-		return 2;
+		return cit_InputError;
 	}
 	return 0;
 }
@@ -292,7 +293,7 @@ int DoImageCommand(CmdToolCommand& cmd)
 	if (int iInitRes = Initialize(cmd))
 		return iInitRes;
 	if (!cmd.CheckExpectedArgs())
-		return 3;
+		return cit_MissingArguments;
 	switch (cmd.m_cit)
 	{
 	case CIT_COMMAND::info:
@@ -317,7 +318,7 @@ int DoImageCommand(CmdToolCommand& cmd)
 		return 0;
 	}
 	wprintf(L"Unknown command: %u\n", cmd.m_cit);
-	return 1;
+	return cit_UserError;
 }
 int wmain(int argc, wchar_t* argv[])
 {
@@ -331,7 +332,7 @@ int wmain(int argc, wchar_t* argv[])
 	if (CIT_COMMAND::unknown == cmd.m_cit)
 	{
 		_putws(L"Could not parse command line.");
-		return 1;
+		return cit_UserError;
 	}
 	return DoImageCommand(cmd);
 }

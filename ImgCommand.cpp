@@ -1,5 +1,6 @@
 #include "ImgCommand.h"
 #include "GdiHelpers.h"
+#include "errors.h"
 
 CmdExpectedParameters g_parameterCounts[] = {
 	CmdExpectedParameters(CIT_COMMAND::info, SrcExpected()),
@@ -22,7 +23,7 @@ int OnUsage(const wchar_t* trigger)
 	if (trigger)
 	{
 		wprintf(L"Confused by: %s\r\n", trigger);
-		ret = 1;
+		ret = cit_UserError;
 	}
 	printf("Usage:\r\n\r\n   cmdimgtool command [options] source destination image-parameters\r\n");
 	printf("                              image parameters are : x y dx dy dx-target dy-target] \r\n\r\n");
@@ -259,7 +260,7 @@ int CmdToolCommand::ParseCommandLineArguments(int argc, wchar_t* argv[])
 	if (nullptr == m_actualExpectedArgs)
 	{
 		puts("Internal error parsing aruguments.");
-		return 1;
+		return cit_Internal;
 	}
 	while ('/' == argv[ixCmd][0])
 	{
