@@ -6,13 +6,13 @@ const char* FormatPixel(const Gdiplus::Color& pixel, char *fmtOutput, size_t cbO
 	snprintf(fmtOutput, cbOutput, "A:%02X R:%02X G:%02X B:%02X", pixel.GetA(), pixel.GetR(), pixel.GetG(), pixel.GetB());
 	return fmtOutput;
 }
-void ShowImageProperties(Gdiplus::Image& img, const wchar_t *tag)
+void ShowImageProperties(Gdiplus::Image *img, const wchar_t *tag)
 {
-	UINT uFlags = img.GetFlags();
-	Gdiplus::ImageType imgType = img.GetType();
-	Gdiplus::PixelFormat pf = img.GetPixelFormat();
+	UINT uFlags = img->GetFlags();
+	Gdiplus::ImageType imgType = img->GetType();
+	Gdiplus::PixelFormat pf = img->GetPixelFormat();
 	bool isbm = false;
-	UINT dx = img.GetWidth(), dy = img.GetHeight();
+	UINT dx = img->GetWidth(), dy = img->GetHeight();
 
 	wprintf(L"Image properties: %s\n--------------------------------------\n", tag);
 	printf(" %3u x %3u\n", dx, dy);
@@ -87,11 +87,11 @@ bool SizeFromBitmap(const HBITMAP hbm, int &dx, int &dy)
 	//Most likely we are trying to load a bum bitmap
 	return false;
 }
-bool SizeFromImage(const Gdiplus::Image& img, long& dx, long& dy)
+bool SizeFromImage(const Gdiplus::Image *img, long& dx, long& dy)
 {
 	Gdiplus::SizeF ds;
 
-	if (Gdiplus::Status::Ok == (const_cast<Gdiplus::Image&>(img).GetPhysicalDimension(&ds)))
+	if (Gdiplus::Status::Ok == (const_cast<Gdiplus::Image*>(img)->GetPhysicalDimension(&ds)))
 	{ 
 		dx = (long)ceil(ds.Width);
 		dy = (long)ceil(ds.Height);
@@ -114,7 +114,7 @@ LONG GetBitmapRes(const HBITMAP hbm)
 	assert(false);
 	return 0;
 }
-bool DrawImageToCanvas(Gdiplus::Image& imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst)
+bool DrawImageToCanvas(Gdiplus::Image *imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst)
 {
 	Gdiplus::Graphics drawer(&bmDst);
 	const Gdiplus::REAL imgDX = static_cast<Gdiplus::REAL>(dx);
@@ -123,9 +123,9 @@ bool DrawImageToCanvas(Gdiplus::Image& imgSrc, Gdiplus::Bitmap& bmDst, const LON
 	const Gdiplus::REAL imgDYDst = static_cast<Gdiplus::REAL>(dyDst);
 	const Gdiplus::RectF rect(0, 0, imgDXDst, imgDYDst);
 
-	return (Gdiplus::Ok == drawer.DrawImage(&imgSrc, rect, 0, 0, imgDX, imgDY, Gdiplus::UnitPixel));
+	return (Gdiplus::Ok == drawer.DrawImage(imgSrc, rect, 0, 0, imgDX, imgDY, Gdiplus::UnitPixel));
 }
-bool DrawImageToCanvas(Gdiplus::Image& imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst)
+bool DrawImageToCanvas(Gdiplus::Image *imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst)
 {
 	Gdiplus::Graphics drawer(hdcDst);
 	const Gdiplus::REAL imgDX = static_cast<Gdiplus::REAL>(dx);
@@ -134,9 +134,9 @@ bool DrawImageToCanvas(Gdiplus::Image& imgSrc, HDC hdcDst, const LONG dx, const 
 	const Gdiplus::REAL imgDYDst = static_cast<Gdiplus::REAL>(dyDst);
 	const Gdiplus::RectF rect(0, 0, imgDXDst, imgDYDst);
 
-	return (Gdiplus::Ok == drawer.DrawImage(&imgSrc, rect, 0, 0, imgDX, imgDY, Gdiplus::UnitPixel));
+	return (Gdiplus::Ok == drawer.DrawImage(imgSrc, rect, 0, 0, imgDX, imgDY, Gdiplus::UnitPixel));
 }
-bool DrawMaskWithFilter(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, Gdiplus::Color colormask, Gdiplus::Color colordest,
+bool DrawMaskWithFilter(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, Gdiplus::Color colormask, Gdiplus::Color colordest,
 						const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst)
 {
 	Gdiplus::ImageAttributes imageAttributes;
@@ -150,18 +150,18 @@ bool DrawMaskWithFilter(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, Gdipl
 	const Gdiplus::RectF rect(imgRxDst, imgRyDst, imgSizeRdx, imgSizeRdy);
 
 	imageAttributes.SetRemapTable(1, &colorMap, Gdiplus::ColorAdjustTypeBitmap);
-	return (Gdiplus::Ok == drawer.DrawImage(&imgSrc, rect, imgRx, imgRy, imgSizeRdx, imgSizeRdy, Gdiplus::UnitPixel, &imageAttributes));
+	return (Gdiplus::Ok == drawer.DrawImage(imgSrc, rect, imgRx, imgRy, imgSizeRdx, imgSizeRdy, Gdiplus::UnitPixel, &imageAttributes));
 }
-bool Fill(Gdiplus::Image& img, COLORREF color)
+bool Fill(Gdiplus::Image *img, COLORREF color)
 {
 	Gdiplus::SolidBrush brush(Gdiplus::Color(GetAValue(color), GetRValue(color), GetGValue(color), GetBValue(color)));
-	Gdiplus::Rect rect(0, 0, img.GetWidth(), img.GetHeight());
-	Gdiplus::Graphics drawer(&img);
+	Gdiplus::Rect rect(0, 0, img->GetWidth(), img->GetHeight());
+	Gdiplus::Graphics drawer(img);
 
 	return Gdiplus::Status::Ok == drawer.FillRectangle(&brush, rect);
 }
 
-bool MaskToTransparent(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask, 
+bool MaskToTransparent(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask, 
 	const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst)
 {
 	return DrawMaskWithFilter(imgSrc, drawer, 
@@ -169,7 +169,7 @@ bool MaskToTransparent(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, COLORR
 								Gdiplus::Color(0, 255, 0, 0),
 								xSrc, ySrc, dx, dy, xDst, yDst);
 }
-bool MaskToTransparent(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask, const LONG dx, const LONG dy)
+bool MaskToTransparent(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	return MaskToTransparent(imgSrc, drawer, colormask, 0, 0, dx, dy, 0, 0);
 }
@@ -178,16 +178,16 @@ bool MaskToTransparent(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, const LON
 	Gdiplus::Bitmap bmSrc(hbmSrc, NULL);
 	Gdiplus::Graphics drawer(hdcDst);
 
-	return MaskToTransparent(bmSrc, drawer, colormask, dx, dy);
+	return MaskToTransparent(&bmSrc, drawer, colormask, dx, dy);
 }
 bool MaskToTransparent(HBITMAP hbmSrc, Gdiplus::Bitmap &bmDst, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	Gdiplus::Bitmap bmSrc(hbmSrc, NULL);
 	Gdiplus::Graphics drawer(&bmDst);
 
-	return MaskToTransparent(bmSrc, drawer, colormask, dx, dy);
+	return MaskToTransparent(&bmSrc, drawer, colormask, dx, dy);
 }
-bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG dx, const LONG dy)
+bool DrawWithFilter(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG dx, const LONG dy)
 {
 	Gdiplus::Graphics drawer(hdcDst);
 
@@ -196,7 +196,7 @@ bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLO
 		Gdiplus::Color(255, GetRValue(colorDst), GetGValue(colorDst), GetBValue(colorDst)),
 		0, 0, dx, dy, 0, 0);
 }
-bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG xDst, const LONG yDst, LONG dx, LONG dy)
+bool DrawWithFilter(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG xDst, const LONG yDst, LONG dx, LONG dy)
 {
 	Gdiplus::Graphics drawer(hdcDst);
 
@@ -206,7 +206,7 @@ bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLO
 		Gdiplus::Color(255, GetRValue(colorDst), GetGValue(colorDst), GetBValue(colorDst)),
 		0, 0, dx, dy, xDst, yDst);
 }
-bool DrawWithTransparent(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy)
+bool DrawWithTransparent(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	Gdiplus::Graphics drawer(hdcDst);
 
@@ -221,7 +221,7 @@ bool DrawWithFilter(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, COLORREF col
 	Gdiplus::Bitmap bmSrc(hbmSrc, NULL);
 	Gdiplus::Graphics drawer(hdcDst);
 
-	return DrawMaskWithFilter(bmSrc, drawer,
+	return DrawMaskWithFilter(&bmSrc, drawer,
 		Gdiplus::Color(255, GetRValue(colormask), GetGValue(colormask), GetBValue(colormask)),
 		Gdiplus::Color(255, GetRValue(colorDst), GetGValue(colorDst), GetBValue(colorDst)),
 		xSrc, ySrc, dx, dy, xDst, yDst);
@@ -261,19 +261,19 @@ bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colo
 		return false;
 	return Gdiplus::Ok == bmDst.Save(pathname, &imgClsid, NULL);
 }
-bool SaveImage(const wchar_t pathname[], Gdiplus::Image& img)
+bool SaveImage(const wchar_t pathname[], Gdiplus::Image *img)
 {
 	CLSID imgClsid;
 
 	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), imgClsid))
 		return false;
-	return Gdiplus::Ok == img.Save(pathname, &imgClsid, NULL);
+	return Gdiplus::Ok == img->Save(pathname, &imgClsid, NULL);
 }
 bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc)
 {
 	Gdiplus::Bitmap bmSrc(hbmSrc, nullptr);
 
-	return SaveImage(pathname, bmSrc);
+	return SaveImage(pathname, &bmSrc);
 }
 
 CGDIInit::CGDIInit()
@@ -375,12 +375,12 @@ CBmSelector::CBmSelector(HDC hdc, HBITMAP hbm) : m_hbmSav(NULL), m_hdc(hdc)
 	if (hdc && hbm)
 		m_hbmSav = SelectObject(hdc, hbm);
 }
-CBmSelector::CBmSelector(HDC hdc, Gdiplus::Bitmap& img) : m_hbmSav(NULL), m_hdc(hdc)
+CBmSelector::CBmSelector(HDC hdc, Gdiplus::Bitmap *img) : m_hbmSav(NULL), m_hdc(hdc)
 {
 	HBITMAP hbm = nullptr;
 	const Gdiplus::Color bkColor(0xFF, 0xFF, 0xFF, 0xFF);
 
-	if (hdc && img.GetHBITMAP(bkColor, &hbm))
+	if (hdc && img->GetHBITMAP(bkColor, &hbm))
 		m_hbmSav = SelectObject(hdc, hbm);
 }
 

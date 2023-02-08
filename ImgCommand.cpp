@@ -120,6 +120,12 @@ int NumFromArg(const wchar_t* arg)
 	return wcstol(arg, NULL, 10);
 }
 
+bool CmdToolCommand::Initialize()
+{
+	if (NeedSourceFile())
+		return false;
+	return Initialize(nullptr);
+}
 bool CmdToolCommand::Initialize(const Gdiplus::Image *srcImage)
 {
 	if (nullptr == m_actualExpectedArgs)
@@ -134,7 +140,7 @@ bool CmdToolCommand::Initialize(const Gdiplus::Image *srcImage)
 
 			if (Gdiplus::Status::Ok != srcImage->GetLastStatus())
 				return false;
-			if (SizeFromImage(*srcImage, dxFromSrc, dyFromSrc))
+			if (SizeFromImage(srcImage, dxFromSrc, dyFromSrc))
 			{
 				if (0 >= dxSrc)
 					dxSrc = dxFromSrc;

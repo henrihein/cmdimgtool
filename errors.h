@@ -3,6 +3,7 @@
 enum Cit_Error
 {
 	cit_None = 0,
+	cit_Fatal = 8999,
 	cit_UserError = 1,
 	cit_InputError = 2,
 	cit_MissingArguments = 3,
@@ -13,6 +14,7 @@ enum Cit_Error
 	cit_IOError = 101,
 	cit_FileOpenError = 102,
 	cit_MemoryError = 103,
+	cit_NoImage = 104,
 	cit_Internal = 1001,
 	cit_InternalImage = 1002
 };

@@ -16,26 +16,26 @@ const COLORREF color_none = RGB(0, 0, 0);
 const COLORREF color_mask = RGB(0, 128, 128);
 
 bool SizeFromBitmap(const HBITMAP hbm, int& dx, int& dy);
-bool SizeFromImage(const Gdiplus::Image &img, long& dx, long& dy);
+bool SizeFromImage(const Gdiplus::Image *img, long& dx, long& dy);
 LONG GetBitmapRes(const HBITMAP hbm);
-bool DrawMaskWithFilter(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, Gdiplus::Color colormask, Gdiplus::Color colordest,
+bool DrawMaskWithFilter(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, Gdiplus::Color colormask, Gdiplus::Color colordest,
 						const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst);
 bool DrawWithFilter(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG dx, const LONG dy);
-bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG dx, const LONG dy);
-bool DrawWithFilter(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG xDst, const LONG yDst, const LONG dx, const LONG dy);
-bool DrawWithTransparent(Gdiplus::Image& imgSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy);
-bool MaskToTransparent(Gdiplus::Image& imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask,
+bool DrawWithFilter(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG dx, const LONG dy);
+bool DrawWithFilter(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, COLORREF colorDst, const LONG xDst, const LONG yDst, const LONG dx, const LONG dy);
+bool DrawWithTransparent(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy);
+bool MaskToTransparent(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask,
 						const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst);
 bool MaskToTransparent(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy);
-bool SaveImage(const wchar_t pathname[], Gdiplus::Image& img);
+bool SaveImage(const wchar_t pathname[], Gdiplus::Image *img);
 bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc);
 bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy);
-bool DrawImageToCanvas(Gdiplus::Image& imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
-bool DrawImageToCanvas(Gdiplus::Image& imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
-bool Fill(Gdiplus::Image& img, COLORREF color);
+bool DrawImageToCanvas(Gdiplus::Image *imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
+bool DrawImageToCanvas(Gdiplus::Image *imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
+bool Fill(Gdiplus::Image *img, COLORREF color);
 UINT GetEncoderClsid(const WCHAR* format, CLSID& clsid);
 
-void ShowImageProperties(Gdiplus::Image& img, const wchar_t *tag);
+void ShowImageProperties(Gdiplus::Image *img, const wchar_t *tag);
 
 class CGDIInit
 {
@@ -98,7 +98,7 @@ class CBmSelector
 {
 public:
 	CBmSelector(HDC hdc, HBITMAP hbm);
-	CBmSelector(HDC hdc, Gdiplus::Bitmap &img);
+	CBmSelector(HDC hdc, Gdiplus::Bitmap *img);
 	virtual ~CBmSelector();
 
 	bool operator()() const { return NULL != m_hbmSav; }

@@ -73,8 +73,10 @@ int SaveImageTo(const wchar_t *filename, HBITMAP hbm)
 	_putws(L"  -> Saving to file failed.\r\n");
 	return 11;
 }
-int SaveImageTo(const wchar_t* filename, Gdiplus::Bitmap &img)
+int SaveImageTo(const wchar_t* filename, Gdiplus::Image *img)
 {
+	if (nullptr == img)
+		return cit_Internal;
 	if (SaveImage(filename, img))
 		return 0;
 	_putws(filename);
@@ -92,26 +94,22 @@ bool BltPiece(HDC hdcDst, LONG xDst, LONG yDst, LONG dxDst, LONG dyDst, HDC hdcS
 }
 
 
-int ShowImageInfo(CmdToolCommand& cmd)
+int ShowImageInfo(CmdToolCommand& cmd, CImageLoader &img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
-
-	ShowImageProperties(*imgSrc, L"Image Information");
+	ShowImageProperties(img.ImagePtr(), L"Image Information");
 	return 0;
 }
-int ConvertImage(CmdToolCommand& cmd)
+int ConvertImage(CmdToolCommand& cmd, CImageLoader& img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
-
-	ShowImageProperties(*imgSrc, L"Image to convert");
-	return SaveImage(cmd.m_wszDstFilename, *imgSrc);
+	ShowImageProperties(img.ImagePtr(), L"Image to convert");
+	return SaveImage(cmd.m_wszDstFilename, img.ImagePtr());
 }
 int CreateCanvas(CmdToolCommand& cmd)
 {
 	Gdiplus::Bitmap bm(cmd.x, cmd.y, (Gdiplus::PixelFormat)PixelFormat32bppARGB);
 
-	if (Fill(bm, cmd.m_color))
-		return SaveImageTo(cmd.m_wszDstFilename, bm);
+	if (Fill(&bm, cmd.m_color))
+		return SaveImageTo(cmd.m_wszDstFilename, &bm);
 	return 181;
 }
 int ExtractImageFrom(CmdToolCommand& cmd, Gdiplus::Image* imgSrc)
@@ -129,7 +127,7 @@ int ExtractImageFrom(CmdToolCommand& cmd, Gdiplus::Image* imgSrc)
 		{
 			if (cmd.m_color1)
 				hdcMem.FillWith(cmd.m_color, cmd.dxDst, cmd.dyDst);
-			save = DrawImageToCanvas(*imgSrc, hdcNew, cmd.dxSrc, cmd.dySrc, cmd.dxDst, cmd.dyDst);
+			save = DrawImageToCanvas(imgSrc, hdcNew, cmd.dxSrc, cmd.dySrc, cmd.dxDst, cmd.dyDst);
 		}
 		else
 			wprintf(L"Could not create new image.\n");
@@ -156,7 +154,7 @@ int FilterImageFrom(CmdToolCommand& cmd, Gdiplus::Image* imgSrc)
 		if (bmSelNew())
 		{
 			hdcMem.FillWith(cmd.m_color, cmd.dxDst, cmd.dyDst);
-			save = DrawWithFilter(*imgSrc, hdcNew, cmd.m_color, cmd.m_targetColor, cmd.dxDst, cmd.dyDst);
+			save = DrawWithFilter(imgSrc, hdcNew, cmd.m_color, cmd.m_targetColor, cmd.dxDst, cmd.dyDst);
 		}
 		else
 			wprintf(L"Could not create new image.\n");
@@ -169,7 +167,7 @@ int FilterImageFrom(CmdToolCommand& cmd, Gdiplus::Image* imgSrc)
 		wprintf(L"Failed to filter image.\n");
 	return retOp;
 }
-int OverlayImageTo(CmdToolCommand& cmd, CBitmapMem& imgDst, Gdiplus::Image& imgSrc)
+int OverlayImageTo(CmdToolCommand& cmd, CBitmapMem& imgDst, Gdiplus::Image *imgSrc)
 {
 	int retOp = 2;
 	CDCMem hdcDst;
@@ -185,77 +183,67 @@ int OverlayImageTo(CmdToolCommand& cmd, CBitmapMem& imgDst, Gdiplus::Image& imgS
 		wprintf(L"Failed to overlay image.\n");
 	return retOp;
 }
-int ExtractImage(CmdToolCommand &cmd)
+int ExtractImage(CmdToolCommand &cmd, CImageLoader &img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
 	int xRetOp = 0;
 
-	LogImage(L"extractimg", *imgSrc);
+	LogImage(L"extractimg", img.Image());
 	cmd.Show(L"Extracting image");
-	xRetOp = ExtractImageFrom(cmd, imgSrc);
-	delete imgSrc;
+	xRetOp = ExtractImageFrom(cmd, img.ImagePtr());
 	return xRetOp;
 }
-int ResizeImage(CmdToolCommand& cmd)
+int ResizeImage(CmdToolCommand& cmd, CImageLoader &img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
 	int xRetOp = 0;
 
-	LogImage(L"resizeimg", *imgSrc);
+	LogImage(L"resizeimg", img.Image());
 	cmd.Show(L"Resizing image");
-	xRetOp = ExtractImageFrom(cmd, imgSrc);
-	delete imgSrc;
+	xRetOp = ExtractImageFrom(cmd, img.ImagePtr());
 	return xRetOp;
 }
-int FilterImage(CmdToolCommand& cmd)
+int FilterImage(CmdToolCommand& cmd, CImageLoader& img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
 	int xRetOp = 0;
 
-	LogImage(L"filterimg", *imgSrc);
+	LogImage(L"filterimg", img.Image());
 	cmd.Show(L"Filtering image");
-	xRetOp = FilterImageFrom(cmd, imgSrc);
-	delete imgSrc;
+	xRetOp = FilterImageFrom(cmd, img.ImagePtr());
 	return xRetOp;
 }
-int OverlayImage(CmdToolCommand& cmd)
+int OverlayImage(CmdToolCommand& cmd, CImageLoader &img)
 {
 	int oRetOp = 0;
 	//Here we want to load the base image from dest:
 	CBitmapMem imgDst(cmd.m_wszDstFilename);
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
 
-	LogImage(L"overlayimgsrc", *imgSrc);
+	LogImage(L"overlayimgsrc", img.Image());
 	cmd.Show(L"Overlaying image");
-	oRetOp = OverlayImageTo(cmd, imgDst, *imgSrc);
-	delete imgSrc;
+	oRetOp = OverlayImageTo(cmd, imgDst, img.ImagePtr());
 	return oRetOp;
 }
-int RotateFlipImage(CmdToolCommand& cmd)
+int RotateFlipImage(CmdToolCommand& cmd, CImageLoader& img)
 {
-	Gdiplus::Image* imgSrc = Gdiplus::Image::FromFile(cmd.m_wszSrcFilename, false);
 	int xRetOp = 0;
 
-	LogImage(L"rotateflipimg", *imgSrc);
+	LogImage(L"rotateflipimg", img.Image());
 	switch (cmd.m_cit)
 	{
 	case CIT_COMMAND::rotate:
 		cmd.Show(L"Rotating image");
-		imgSrc->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
+		img.Image().RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
 		break;
 	case CIT_COMMAND::flipvert:
 		cmd.Show(L"Flipping image vertically");
-		imgSrc->RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipY);
+		img.Image().RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipY);
 		break;
 	case CIT_COMMAND::fliphorz:
 		cmd.Show(L"Flipping image horizontally");
-		imgSrc->RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipX);
+		img.Image().RotateFlip(Gdiplus::RotateFlipType::RotateNoneFlipX);
 		break;
 	default:
 		break;
 	}
-	xRetOp = SaveImage(cmd.m_wszDstFilename, *imgSrc);
-	delete imgSrc;
+	xRetOp = SaveImage(cmd.m_wszDstFilename, img.ImagePtr());
 	return xRetOp;
 }
 bool FileExists(LPCWSTR filename)
@@ -272,11 +260,9 @@ bool FileExists(LPCWSTR filename)
 	}
 	return false;
 }
-int Initialize(CmdToolCommand& cmd)
+int Initialize(CmdToolCommand& cmd, CImageLoader &img)
 {
-	CImageLoader img(cmd.m_wszSrcFilename);
-
-	if (!cmd.Initialize(img.Image()))
+	if (!cmd.Initialize(img.ImagePtr()))
 	{
 		if (FileExists(cmd.m_wszSrcFilename))
 			wprintf(L"Could not initialize with file %s\n", cmd.m_wszSrcFilename);
@@ -286,54 +272,81 @@ int Initialize(CmdToolCommand& cmd)
 	}
 	return 0;
 }
-int DoImageCommand(CmdToolCommand& cmd)
+int DoImageCommand(CmdToolCommand& cmd, CImageLoader &img)
 {
-	CGDIInit gdi;
-
-	if (int iInitRes = Initialize(cmd))
+	if (int iInitRes = Initialize(cmd, img))
 		return iInitRes;
 	if (!cmd.CheckExpectedArgs())
 		return cit_MissingArguments;
 	switch (cmd.m_cit)
 	{
 	case CIT_COMMAND::info:
-		return ShowImageInfo(cmd);
+		return ShowImageInfo(cmd, img);
 	case CIT_COMMAND::convert:
-		return ConvertImage(cmd);
+		return ConvertImage(cmd, img);
 	case CIT_COMMAND::canvas:
 		return CreateCanvas(cmd);
 	case CIT_COMMAND::extract:
-		return ExtractImage(cmd);
+		return ExtractImage(cmd, img);
 	case CIT_COMMAND::resize:
-		return ResizeImage(cmd);
+		return ResizeImage(cmd, img);
 	case CIT_COMMAND::filter:
-		return FilterImage(cmd);
+		return FilterImage(cmd, img);
 	case CIT_COMMAND::overlay:
-		return OverlayImage(cmd);
+		return OverlayImage(cmd, img);
 	case CIT_COMMAND::rotate:
 	case CIT_COMMAND::flipvert:
 	case CIT_COMMAND::fliphorz:
-		return RotateFlipImage(cmd);
+		return RotateFlipImage(cmd, img);
 	case CIT_COMMAND::help:
 		return 0;
 	}
 	wprintf(L"Unknown command: %u\n", cmd.m_cit);
 	return cit_UserError;
 }
+int DoImageCommand(CmdToolCommand& cmd)
+{
+	CGDIInit gdi;
+
+	//Input (source) image is potentially expensive to load. 
+	//Load it here if needed and pass it on to the rest of
+	//the processing functions.
+	if (cmd.NeedSourceFile())
+	{
+		CImageLoader img(cmd.m_wszSrcFilename);
+
+		return DoImageCommand(cmd, img);
+	}
+	else
+	{
+		CEmptyImage empty;
+
+		return DoImageCommand(cmd, empty);
+	}
+}
 int wmain(int argc, wchar_t* argv[])
 {
-	CmdToolCommand cmd;
-	int parseRes = cmd.ParseCommandLine(argc, argv);
-
-	if (0 != parseRes)
-		return parseRes;
-	if (CIT_COMMAND::none == cmd.m_cit)
-		return 0;
-	if (CIT_COMMAND::unknown == cmd.m_cit)
+	try
 	{
-		_putws(L"Could not parse command line.");
-		return cit_UserError;
+		CmdToolCommand cmd;
+		int parseRes = cmd.ParseCommandLine(argc, argv);
+
+		if (0 != parseRes)
+			return parseRes;
+		if (CIT_COMMAND::none == cmd.m_cit)
+			return 0;
+		if (CIT_COMMAND::unknown == cmd.m_cit)
+		{
+			_putws(L"Could not parse command line.");
+			return cit_UserError;
+		}
+		return DoImageCommand(cmd);
 	}
-	return DoImageCommand(cmd);
+	catch (const std::exception& ex)
+	{
+		puts("Fatal error processing command.");
+		puts(ex.what());
+		return cit_Fatal;
+	}
 }
 

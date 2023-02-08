@@ -5,6 +5,7 @@
 
 CImageLoader::CImageLoader()
 {
+	m_error = cit_NoImage;
 	m_gdiImage = nullptr;
 }
 CImageLoader::CImageLoader(const wchar_t* imgSrc)

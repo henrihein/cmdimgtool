@@ -2,16 +2,21 @@
 class CImageLoader
 {
 public:
-	CImageLoader();
 	CImageLoader(const wchar_t *imgSrc);
 	virtual ~CImageLoader();
 
 	bool Load(const wchar_t* imgSrc);
 	bool Loaded();
 
-	Gdiplus::Image* Image() { return m_gdiImage; }
-
+	Gdiplus::Image* ImagePtr() { return m_gdiImage; }
+	Gdiplus::Image& Image()
+	{
+		if (nullptr == m_gdiImage)
+			throw std::exception("No image loaded");
+		return *m_gdiImage;
+	}
 protected:
+	CImageLoader();
 	class CFileHandle
 	{
 	public:
@@ -75,3 +80,10 @@ private:
 	DWORD m_error;
 };
 
+class CEmptyImage : public CImageLoader
+{
+public:
+	CEmptyImage() : CImageLoader()
+	{
+	}
+};

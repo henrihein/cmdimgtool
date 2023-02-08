@@ -61,6 +61,7 @@ public:
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;
 		m_verbose = false;
 	}
+	bool Initialize();
 	bool Initialize(const Gdiplus::Image *srcImage);
 	bool CheckExpectedArgs();
 	bool NeedSourceFile() const;
