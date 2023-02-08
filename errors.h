@@ -15,6 +15,11 @@ enum Cit_Error
 	cit_FileOpenError = 102,
 	cit_MemoryError = 103,
 	cit_NoImage = 104,
+	cit_gdiError = 200,
+	cit_gdiNoType = 201,
+	cit_gdiInvalidData = 202,
+	cit_gdiWin32 = 203,
+	cit_gdiAborted = 204,
 	cit_Internal = 1001,
 	cit_InternalImage = 1002
 };

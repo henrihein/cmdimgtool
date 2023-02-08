@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GdiHelpers.h"
+#include "errors.h"
 
 const char* FormatPixel(const Gdiplus::Color& pixel, char *fmtOutput, size_t cbOutput)
 {
@@ -51,7 +52,7 @@ void ShowImageProperties(Gdiplus::Image *img, const wchar_t *tag)
 	}
 	if (isbm)
 	{
-		Gdiplus::Bitmap* pbm = (Gdiplus::Bitmap*)&img;
+		Gdiplus::Bitmap* pbm = static_cast<Gdiplus::Bitmap*>(img);
 
 		if (nullptr != pbm)
 		{
@@ -251,25 +252,49 @@ const wchar_t* GetImageType(const wchar_t pathname[])
 	//Default to png
 	return L"image/png";
 }
-bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy)
+int GdiErrorFromStatus(Gdiplus::Status stat)
+{
+	switch (stat)
+	{
+	case Gdiplus::Ok:
+		return cit_None;
+	case Gdiplus::InvalidParameter:
+	case Gdiplus::WrongState:
+		return cit_gdiInvalidData;
+	case Gdiplus::OutOfMemory:
+		return cit_MemoryError;
+	case Gdiplus::InsufficientBuffer:
+		return cit_MemoryError;
+	case Gdiplus::Win32Error:
+		return cit_gdiWin32;
+	case Gdiplus::Aborted:
+		return cit_gdiAborted;
+	case Gdiplus::FileNotFound:
+		return cit_MissingFile;
+	default:
+		return cit_gdiError;
+	}
+
+}
+int SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy)
 {
 	Gdiplus::Bitmap bmDst(dx, dy, PixelFormat32bppPARGB);
 	CLSID imgClsid;
 
 	MaskToTransparent(hbmSrc, bmDst, colormask, dx, dy);
 	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), imgClsid))
-		return false;
-	return Gdiplus::Ok == bmDst.Save(pathname, &imgClsid, NULL);
+		return cit_gdiNoType;
+	return GdiErrorFromStatus(bmDst.Save(pathname, &imgClsid, NULL));
 }
-bool SaveImage(const wchar_t pathname[], Gdiplus::Image *img)
+int SaveImage(const wchar_t pathname[], Gdiplus::Image *img)
 {
 	CLSID imgClsid;
 
 	if (UINT_MAX == GetEncoderClsid(GetImageType(pathname), imgClsid))
-		return false;
-	return Gdiplus::Ok == img->Save(pathname, &imgClsid, NULL);
+		return cit_gdiNoType;
+	return GdiErrorFromStatus(img->Save(pathname, &imgClsid, NULL));
 }
-bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc)
+int SaveImage(const wchar_t pathname[], HBITMAP hbmSrc)
 {
 	Gdiplus::Bitmap bmSrc(hbmSrc, nullptr);
 

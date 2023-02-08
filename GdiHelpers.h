@@ -27,9 +27,9 @@ bool DrawWithTransparent(Gdiplus::Image *imgSrc, HDC hdcDst, COLORREF colormask,
 bool MaskToTransparent(Gdiplus::Image *imgSrc, Gdiplus::Graphics& drawer, COLORREF colormask,
 						const LONG xSrc, const LONG ySrc, const LONG dx, const LONG dy, const LONG xDst, const LONG yDst);
 bool MaskToTransparent(HBITMAP hbmSrc, HDC hdcDst, COLORREF colormask, const LONG dx, const LONG dy);
-bool SaveImage(const wchar_t pathname[], Gdiplus::Image *img);
-bool SaveImage(const wchar_t pathname[], HBITMAP hbmSrc);
-bool SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy);
+int SaveImage(const wchar_t pathname[], Gdiplus::Image *img);
+int SaveImage(const wchar_t pathname[], HBITMAP hbmSrc);
+int SaveWithTransparent(const wchar_t pathname[], HBITMAP hbmSrc, COLORREF colormask, const LONG dx, const LONG dy);
 bool DrawImageToCanvas(Gdiplus::Image *imgSrc, Gdiplus::Bitmap& bmDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
 bool DrawImageToCanvas(Gdiplus::Image *imgSrc, HDC hdcDst, const LONG dx, const LONG dy, const LONG dxDst, const LONG dyDst);
 bool Fill(Gdiplus::Image *img, COLORREF color);
@@ -123,3 +123,4 @@ private:
 	HBRUSH m_hbr;
 	HGDIOBJ m_hbrSav;
 };
+
