@@ -3,12 +3,37 @@
 #include "errors.h"
 #include "webp/decode.h"
 
-CImageLoader::CImageLoader()
+CBmData::CBmData(const BYTE* raw, ULONG dx, ULONG dy, ULONG bytesPerPixel, ULONG stride) : CDataPtr()
+{
+	const ULONG rawBytesPerRow = bytesPerPixel * dx;
+
+	m_size = stride * dy;
+	Allocate(m_size);
+	if (nullptr != Data())
+	for (ULONG ixScanline = 0; ixScanline < dy; ixScanline++)
+	{
+		memcpy(Data() + ixScanline * stride, raw + ixScanline * rawBytesPerRow, rawBytesPerRow);
+		//Set the tailing bytes to 0
+		if (stride > rawBytesPerRow)
+			memset(Data() + ixScanline * stride + rawBytesPerRow, 0, stride - rawBytesPerRow);
+	}
+}
+BYTE* CDataPtr::Allocate(ULONG size)
+{
+	if (LPVOID data = VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_READWRITE))
+		m_data = (BYTE*)VirtualAlloc(data, size, MEM_COMMIT, PAGE_READWRITE);
+	else
+		m_error = GetLastError();
+	return m_data;
+}
+
+
+CImageLoader::CImageLoader() : m_imageData(nullptr)
 {
 	m_error = cit_NoImage;
 	m_gdiImage = nullptr;
 }
-CImageLoader::CImageLoader(const wchar_t* imgSrc)
+CImageLoader::CImageLoader(const wchar_t* imgSrc) : m_imageData(nullptr)
 {
 	m_gdiImage = nullptr;
 	Load(imgSrc);
@@ -69,6 +94,19 @@ int CImageLoader::GetStride(Gdiplus::PixelFormat pf, int dx)
 	//Must be multiplier of 4
 	return ((3 + stride) >> 2) << 2;
 }
+int CImageLoader::GetBPP(Gdiplus::PixelFormat pf)
+{
+	switch (pf)
+	{
+	case PixelFormat32bppARGB:
+		return 4;
+	case PixelFormat24bppRGB:
+		return 3;
+	default:
+		break;
+	}
+	return 3;
+}
 Gdiplus::Image* MakeTestImage()
 {
 	const int dx = 24, dy = 12;
@@ -83,7 +121,7 @@ Gdiplus::Image* MakeTestImage()
 	}
 	return new Gdiplus::Bitmap(dx, dy, 3 * dx, PixelFormat24bppRGB, imgData);
 }
-bool CImageLoader::LoadWebpData(CImageLoader::CData* data)
+bool CImageLoader::LoadWebpData(CBmData* data)
 {
 	int dx = 0, dy = 0;
 
@@ -95,12 +133,21 @@ bool CImageLoader::LoadWebpData(CImageLoader::CData* data)
 		if (VP8_STATUS_OK == WebPGetFeatures(*data, data->Size(), &features))
 		{
 			Gdiplus::PixelFormat pf = GetPixelFormat(features);
-			BYTE* imageData = WebPDecodeARGB(*data, data->Size(), &dx, &dy);
+			BYTE* imageDataRaw = nullptr;
 
-			if (imageData)
+			if (features.has_alpha)
+				//TODO: need to reverse R and B
+				imageDataRaw = WebPDecodeARGB(data->Data(), data->Size(), &dx, &dy);
+			else
+				imageDataRaw = WebPDecodeBGR(data->Data(), data->Size(), &dx, &dy);
+			if (imageDataRaw)
 			{
-				m_gdiImage = new Gdiplus::Bitmap(dx, dy, GetStride(pf, dx), pf, imageData);
-				WebPFree(imageData);
+				ULONG stride = GetStride(pf, dx);
+				CBmData imageDataUse(imageDataRaw, dx, dy, GetBPP(pf), stride);
+
+				m_gdiImage = new Gdiplus::Bitmap(dx, dy, stride, pf, imageDataUse);
+				m_imageData << imageDataUse;
+				WebPFree(imageDataRaw);
 				return true;
 			}
 			else
@@ -111,7 +158,7 @@ bool CImageLoader::LoadWebpData(CImageLoader::CData* data)
 	}
 	return false;
 }
-CImageLoader::CData* CImageLoader::LoadFileContents(const wchar_t* imgSrc)
+CBmData* CImageLoader::LoadFileContents(const wchar_t* imgSrc)
 {
 	CImageLoader::CFileHandle fh(CreateFileW(imgSrc, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL));
 
@@ -123,12 +170,11 @@ CImageLoader::CData* CImageLoader::LoadFileContents(const wchar_t* imgSrc)
 		{
 			if (UINT_MAX > fileSize.QuadPart)
 			{
-				CData* data = new CData(fileSize.LowPart);
-				BYTE* fileData = (BYTE*)VirtualAlloc(NULL, fileSize.LowPart, MEM_RESERVE | MEM_COMMIT, FALSE);
+				CBmData* data = new CBmData(fileSize.LowPart);
 
 				if ((nullptr != data) && (*data)())
 				{
-					CData buf(1024 * 64);
+					CBmData buf(1024 * 64);
 					DWORD cbRed = 0, cbTotal = 0;
 
 					if (buf())
@@ -160,7 +206,7 @@ CImageLoader::CData* CImageLoader::LoadFileContents(const wchar_t* imgSrc)
 }
 bool CImageLoader::LoadWebp(const wchar_t* imgSrc)
 {
-	CData *data = LoadFileContents(imgSrc);
+	CBmData *data = LoadFileContents(imgSrc);
 
 	if (data)
 	{

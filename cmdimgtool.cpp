@@ -87,14 +87,12 @@ int SaveImageTo(const wchar_t* filename, Gdiplus::Image *img)
 //Blt a piece
 bool BltPiece(HDC hdcDst, LONG xDst, LONG yDst, LONG dxDst, LONG dyDst, HDC hdcSrc, LONG xSrc, LONG ySrc, LONG dxSrc, LONG dySrc)
 {
-	HBRUSH mtBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
-
 	return (StretchBlt(hdcDst, xDst, yDst, dxDst, dyDst, hdcSrc, xSrc, ySrc, dxSrc, dySrc, SRCCOPY))
 			? true : false;
 }
 
 
-int ShowImageInfo(CmdToolCommand& cmd, CImageLoader &img)
+int ShowImageInfo(CImageLoader &img)
 {
 	ShowImageProperties(img.ImagePtr(), L"Image Information");
 	return 0;
@@ -281,7 +279,7 @@ int DoImageCommand(CmdToolCommand& cmd, CImageLoader &img)
 	switch (cmd.m_cit)
 	{
 	case CIT_COMMAND::info:
-		return ShowImageInfo(cmd, img);
+		return ShowImageInfo(img);
 	case CIT_COMMAND::convert:
 		return ConvertImage(cmd, img);
 	case CIT_COMMAND::canvas:

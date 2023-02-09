@@ -6,7 +6,7 @@ private:
 	const unsigned m_expectedArgs;
 
 protected:
-	static const unsigned EAV_UNKNOWN = -1;
+	static const unsigned EAV_UNKNOWN = (unsigned)-1;
 	static const unsigned EAV_NONE = 0x0000000;
 	static const unsigned EAV_XY = 0x0000001;
 	static const unsigned EAV_DXDY = 0x0000002;
