@@ -26,7 +26,7 @@ int OnUsage(const wchar_t* trigger)
 		ret = cit_UserError;
 	}
 	printf("Usage:\r\n\r\n   cmdimgtool command [options] source destination image-parameters\r\n");
-	printf("                              image parameters are : x y dx dy dx-target dy-target] \r\n\r\n");
+	printf("                              image parameters are : [x y dx dy dx-target dy-target] \r\n\r\n");
 	printf("  Possible commands:\r\n");
 	printf("   help\r\n");
 	printf("   info\r\n");
@@ -169,6 +169,7 @@ bool CmdToolCommand::ParseOption(const wchar_t* argOption)
 	static const wchar_t sourceColArg[] = L"/sourcecolor:";
 	static const wchar_t verboseArg[] = L"/verbose";
 	static const wchar_t quietArg[] = L"/quiet";
+	static const wchar_t randomizeArg[] = L"/randomize";
 
 	if ((0 == _wcsnicmp(colArg, argOption, _countof(colArg) - 1)) || (0 == _wcsnicmp(sourceColArg, argOption, _countof(sourceColArg) - 1)))
 	{
@@ -190,6 +191,11 @@ bool CmdToolCommand::ParseOption(const wchar_t* argOption)
 	if (0 == _wcsnicmp(quietArg, argOption, _countof(quietArg) - 1))
 	{
 		m_quiet = true;
+		return true;
+	}
+	if (0 == _wcsnicmp(randomizeArg, argOption, _countof(randomizeArg) - 1))
+	{
+		m_randomize = true;
 		return true;
 	}
 	return false;

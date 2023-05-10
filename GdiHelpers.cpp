@@ -397,16 +397,32 @@ CBitmapMem::~CBitmapMem()
 
 CBmSelector::CBmSelector(HDC hdc, HBITMAP hbm) : m_hbmSav(NULL), m_hdc(hdc)
 {
+	m_dx = m_dy = 0;
 	if (hdc && hbm)
+	{
+		BITMAP bmData;
+
+		if (GetObject(hbm, sizeof(bmData), &bmData))
+		{
+			m_dx = bmData.bmWidth;
+			m_dy = bmData.bmHeight;
+			wprintf(L"BITMAP data %u.%u\n", bmData.bmWidth, bmData.bmHeight);
+		}
 		m_hbmSav = SelectObject(hdc, hbm);
+	}
 }
 CBmSelector::CBmSelector(HDC hdc, Gdiplus::Bitmap *img) : m_hbmSav(NULL), m_hdc(hdc)
 {
 	HBITMAP hbm = nullptr;
 	const Gdiplus::Color bkColor(0xFF, 0xFF, 0xFF, 0xFF);
 
+	m_dx = m_dy = 0;
 	if (hdc && img->GetHBITMAP(bkColor, &hbm))
+	{
+		m_dx = img->GetWidth();
+		m_dy = img->GetHeight();
 		m_hbmSav = SelectObject(hdc, hbm);
+	}
 }
 
 CBmSelector::~CBmSelector()

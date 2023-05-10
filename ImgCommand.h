@@ -46,7 +46,7 @@ public:
 	wchar_t m_wszSrcFilename[MAX_PATH];
 	wchar_t m_wszDstFilename[MAX_PATH];
 	int x, y, dxSrc, dySrc, dxDst, dyDst;
-	bool m_quiet, m_verbose, m_wrongArgs;
+	bool m_quiet, m_verbose, m_wrongArgs, m_randomize;
 
 	CmdToolCommand()
 	{
@@ -56,6 +56,7 @@ public:
 		m_color1 = m_color2 = m_transparent = false;
 		m_quiet = false;
 		m_wrongArgs = true;
+		m_randomize = false;
 		memset(m_wszSrcFilename, 0, _countof(m_wszSrcFilename));
 		memset(m_wszDstFilename, 0, _countof(m_wszDstFilename));
 		x = y = dxSrc = dySrc = dxDst = dyDst = 0;

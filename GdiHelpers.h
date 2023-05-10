@@ -102,11 +102,14 @@ public:
 	virtual ~CBmSelector();
 
 	bool operator()() const { return NULL != m_hbmSav; }
+	LONG DX() const { return m_dx; }
+	LONG DY() const { return m_dy; }
 
 private:
 	CBmSelector(const CBmSelector &);
 	HGDIOBJ m_hbmSav;
 	const HDC m_hdc;
+	LONG m_dx, m_dy;
 };
 
 class CSolidBrushSelector

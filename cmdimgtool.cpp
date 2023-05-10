@@ -67,21 +67,27 @@ bool LogImage(const wchar_t* tag, Gdiplus::Image& img)
 
 int SaveImageTo(const wchar_t *filename, HBITMAP hbm)
 {
-	if (SaveImage(filename, hbm))
+	int savResult = SaveImage(filename, hbm);
+
+	if (cit_None == savResult)
 		return 0;
 	_putws(filename);
 	_putws(L"  -> Saving to file failed.\r\n");
-	return 11;
+	return savResult;
 }
 int SaveImageTo(const wchar_t* filename, Gdiplus::Image *img)
 {
 	if (nullptr == img)
 		return cit_Internal;
-	if (SaveImage(filename, img))
-		return 0;
-	_putws(filename);
-	_putws(L"  -> Saving to file failed.\r\n");
-	return 11;
+	else
+	{
+		int savResult = SaveImage(filename, img);
+		if (cit_None == savResult)
+			return 0;
+		_putws(filename);
+		_putws(L"  -> Saving to file failed.\r\n");
+		return savResult;
+	}
 }
 
 //Blt a piece
@@ -171,8 +177,27 @@ int OverlayImageTo(CmdToolCommand& cmd, CBitmapMem& imgDst, Gdiplus::Image *imgS
 	CDCMem hdcDst;
 	bool save = false;
 	CBmSelector hdcDstSel(hdcDst, imgDst);
+	LONG x = cmd.x, y = cmd.y;
 
-	save = DrawWithFilter(imgSrc, hdcDst, cmd.m_color, cmd.m_targetColor, cmd.x, cmd.y, cmd.dxDst, cmd.dyDst);
+	if (cmd.m_randomize)
+	{
+		LONG dxMax = hdcDstSel.DX(), dyMax = hdcDstSel.DY();
+		const LONG dxMargin = dxMax - imgSrc->GetWidth() - x, dyMargin = dyMax - imgSrc->GetHeight() - y;
+		bool fixedX = false, fixedY = false;
+
+		//Pick a random location based on provided x/y
+		if (dxMargin > 0)
+			x = x + rand() % dxMargin;
+		else
+			fixedX = true;
+		if (0 < dyMargin)
+			y = y + rand() % dyMargin;
+		else
+			fixedY = true;
+		if (fixedX && fixedY)
+			wprintf(L"No room for randomization. Using fixed position at %u.%u (%u %u %u %u %u %u)\n", x, y, dxMax, dyMax, imgSrc->GetWidth(), imgSrc->GetHeight(), dxMax, dyMax);
+	}
+	save = DrawWithFilter(imgSrc, hdcDst, cmd.m_color, cmd.m_targetColor, x, y, cmd.dxDst, cmd.dyDst);
 	if (save)
 		retOp = SaveImageTo(cmd.m_wszDstFilename, imgDst);
 	if (0 == retOp)
@@ -338,6 +363,7 @@ int wmain(int argc, wchar_t* argv[])
 			_putws(L"Could not parse command line.");
 			return cit_UserError;
 		}
+		srand(GetTickCount());
 		return DoImageCommand(cmd);
 	}
 	catch (const std::exception& ex)
